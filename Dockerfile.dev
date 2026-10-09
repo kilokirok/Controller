@@ -1,0 +1,23 @@
+FROM ruby:3.2.2
+
+# CSS 번들링을 위한 Node.js 및 Yarn 설치
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && npm install -g yarn nodemon sass
+
+WORKDIR /app
+
+# Gem 패키지 설치
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Node 패키지 설치 (Bootstrap 등)
+COPY package.json yarn.lock* ./
+RUN if [ -f package.json ]; then yarn install; fi
+
+COPY . .
+
+EXPOSE 3000
+
+# 서버 실행 전 기존 PID 삭제 후 bin/dev(Rails + CSS 감시) 실행
+CMD ["bash", "-c", "rm -f tmp/pids/server.pid && ./bin/dev"]
